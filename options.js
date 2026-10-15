@@ -3,6 +3,7 @@
 const DEFAULTS = {
   enabled: true,
   preview: true,
+  prFilters: true,
   prefix: 'review',
   badges: {
     must: { label: 'must', color: 'red' },
@@ -67,6 +68,7 @@ function restore() {
   chrome.storage.sync.get(DEFAULTS, (stored) => {
     $('enabled').checked = stored.enabled !== false;
     $('sidePreview').checked = stored.preview !== false;
+    $('prFilters').checked = stored.prFilters !== false;
     $('prefix').value = stored.prefix || DEFAULTS.prefix;
     const badges = Object.keys(stored.badges || {}).length ? stored.badges : DEFAULTS.badges;
     $('badges').value = stringifyBadges(badges);
@@ -80,6 +82,7 @@ function save() {
     {
       enabled: $('enabled').checked,
       preview: $('sidePreview').checked,
+      prFilters: $('prFilters').checked,
       prefix: $('prefix').value.trim() || DEFAULTS.prefix,
       badges: Object.keys(badges).length ? badges : DEFAULTS.badges,
     },

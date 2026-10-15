@@ -1,0 +1,47 @@
+/* PR 一覧の見出しの横に並べる絞り込みボタン。
+   色は GitHub（Primer）の CSS 変数を使うので、ライト / ダークのどちらにも自動で合う */
+
+/* 見出しの行。狭いときに見出しが「All pull r…」と省略されないよう、
+   ボタンの並びごと次の行へ回す（間隔は GitHub 側の gap-2 が !important で決めている） */
+:has(> h1[data-testid="header-title"] + .ghh-pr-filters) {
+  flex-wrap: wrap;
+}
+
+.ghh-pr-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  align-self: center;
+  gap: 6px;
+  /* 見出しの h1 に付いている下余白（mb-1）と揃えて、文字の高さの中心に合わせる */
+  margin: 0 0 4px;
+}
+
+.ghh-pr-filter {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--fgColor-default, #1f2328);
+  text-decoration: none;
+  background: var(--button-default-bgColor-rest, #f6f8fa);
+  border: 1px solid var(--button-default-borderColor-rest, #d1d9e0);
+  border-radius: 999px;
+}
+
+.ghh-pr-filter:hover {
+  color: var(--fgColor-default, #1f2328);
+  text-decoration: none;
+  background: var(--button-default-bgColor-hover, #eff2f5);
+}
+
+.ghh-pr-filter[aria-current="true"],
+.ghh-pr-filter[aria-current="true"]:hover {
+  color: var(--fgColor-onEmphasis, #ffffff);
+  background: var(--bgColor-accent-emphasis, #0969da);
+  border-color: transparent;
+}
