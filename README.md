@@ -5,6 +5,8 @@ GitHub を便利にする Chrome 拡張です。いまは次の2つができま�
 - コメント欄の隣に Preview を常時表示する
 - `/imo` と入力してスペースを押すと、shields.io のレビューバッジの Markdown に変換する
 
+![左の入力欄に書いた Markdown が、右の Preview にバッジやコードブロックごと描画されている様子](docs/preview.png)
+
 ```
 /imo␣  →  ![](https://img.shields.io/badge/review-imo-orange.svg)
 ```
@@ -42,19 +44,8 @@ PR のレビューコメント欄・Issue・コミットコメントなど、Git
 
 ### Preview を隣に並べる
 
-コメント欄の隣に Preview が常時表示され、Write / Preview タブを行き来せずに仕上がりを確認できます。
-
-```
-┌─────────────────────────┐  ┌─────────────────────────┐
-│ ![](…/review-imo-…svg)  │  │ Preview                 │
-│ この書き方だと N+1 に…   │  │ [review|imo] この書き方… │
-│ - sasa                  │  │  • sasa                 │
-│ ```ruby                 │  │ ┌─────────────────────┐ │
-│ this is a test          │  │ │ this is a test      │ │
-│ ```                     │  │ └─────────────────────┘ │
-└─────────────────────────┘  └─────────────────────────┘
-        Write（素の textarea）          Preview
-```
+コメント欄の隣に Preview が常時表示され、Write / Preview タブを行き来せずに仕上がりを確認できます
+（冒頭のスクリーンショットのような見た目になります）。
 
 - **入力欄には一切手を加えません**。GitHub の `textarea` はそのまま残り、値を読み取って隣に描画するだけ
   なので、Submit・下書き保存・GitHub 純正の Preview タブはすべて元のまま動きます。
@@ -111,6 +102,7 @@ content.css             Preview と候補のスタイル（拡張機能の CSS �
 options.html            設定画面
 options.js              設定の保存・復元とバッジのプレビュー
 test/local-test.html    拡張機能を入れずに挙動を試すためのページ
+docs/preview.png        README のスクリーンショット
 ```
 
 ## 開発時の動作確認
