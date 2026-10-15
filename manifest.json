@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "GitHub Helper",
   "version": "2.0.1",
-  "description": "GitHub を便利にします。コメント欄の隣の常時プレビュー、/imo などでのレビューバッジの挿入、PR 一覧の絞り込みボタン。",
+  "description": "GitHub を便利にします。コメント欄の隣の常時プレビュー、/imo などでのレビューバッジの挿入、PR 一覧の絞り込みボタン、PR タイトルのコピーボタン。",
   "permissions": [
     "storage"
   ],
@@ -17,13 +17,15 @@
       ],
       "js": [
         "content.js",
-        "pr-filters.js"
+        "pr-filters.js",
+        "copy-title.js"
       ],
       "run_at": "document_idle",
       "all_frames": true,
       "css": [
         "content.css",
-        "pr-filters.css"
+        "pr-filters.css",
+        "copy-title.css"
       ]
     }
   ]

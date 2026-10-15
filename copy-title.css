@@ -1,0 +1,72 @@
+/* PR のタイトルの後ろに置くコピーボタンと、そのツールチップ。
+   GitHub のブランチ名のコピーボタン（Primer の IconButton small / invisible と TooltipV2）に合わせる。
+   色は GitHub（Primer）の CSS 変数を使うので、ライト / ダークのどちらにも自動で合う */
+
+.ghh-copy-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 6px;
+  padding: 0;
+  vertical-align: middle;
+  color: var(--button-invisible-iconColor-rest, #59636e);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+}
+
+/* 従来の画面では見出しの文の流れの中に置く。vertical-align: middle は小文字の高さの中央に揃うので、
+   数字（#123）の高さの中央まで文字の大きさに比例して持ち上げる。左の間隔は h1 の中の空白に任せる */
+.ghh-copy-title-inline {
+  position: relative;
+  top: -0.125em;
+  margin-left: 0;
+}
+
+.ghh-copy-title:hover {
+  color: var(--button-invisible-iconColor-hover, #59636e);
+  background: var(--button-invisible-bgColor-hover, rgba(129, 139, 152, 0.1));
+}
+
+.ghh-copy-title svg {
+  fill: currentColor;
+}
+
+.ghh-copy-title-done,
+.ghh-copy-title-done:hover {
+  color: var(--fgColor-success, #1a7f37);
+}
+
+.ghh-copy-title-failed,
+.ghh-copy-title-failed:hover {
+  color: var(--fgColor-danger, #d1242f);
+}
+
+/* popover の既定（画面中央に固定）を打ち消し、JS で決めたページ座標に置く */
+.ghh-tooltip {
+  position: absolute;
+  inset: auto;
+  max-width: 250px;
+  margin: 0;
+  padding: 4px 8px;
+  overflow: visible;
+  /* 書体は body（GitHub の Mona Sans）を受け継ぐ */
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.625;
+  color: var(--tooltip-fgColor, #ffffff);
+  white-space: normal;
+  pointer-events: none;
+  background: var(--tooltip-bgColor, #25292e);
+  border: 0;
+  border-radius: 6px;
+  animation: ghh-tooltip-appear 0.1s ease-in forwards;
+}
+
+@keyframes ghh-tooltip-appear {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

@@ -1,10 +1,11 @@
 # GitHub Helper
 
-GitHub を便利にする Chrome 拡張です。いまは次の3つができます。
+GitHub を便利にする Chrome 拡張です。いまは次の4つができます。
 
 - コメント欄の隣に Preview を常時表示する
 - `/imo` と入力してスペースを押すと、shields.io のレビューバッジの Markdown に変換する
 - PR 一覧の見出しの横に、My PRs などの絞り込みボタンを出す
+- PR の詳細画面で、タイトルの横にタイトルのコピーボタンを出す
 
 ![左の入力欄に書いた Markdown が、右の Preview にバッジやコードブロックごと描画されている様子](docs/preview.png)
 
@@ -89,6 +90,16 @@ PR のレビューコメント欄・Issue・コミットコメントなど、Git
 - `@me` はログインしているときしか使えないので、ログインしていないときは出しません。
 - 画面が狭いときは、見出しが省略されないようにボタンを見出しの下の行に回します。
 
+### PR タイトルのコピーボタン
+
+PR の詳細画面（Conversation / Commits / Checks / Files changed のどのタブでも）で、タイトルの番号（`#123`）の
+後ろにコピーボタンが付きます。押すとタイトルだけがクリップボードに入ります。
+
+- 見た目と動きは、GitHub のブランチ名のコピーボタンに揃えています。マウスを乗せると
+  「Copy title to clipboard」、押すとアイコンが緑のチェックに変わって「Copied!」と出て、2 秒で元に戻ります。
+- タイトル中の `` `コード` `` はバッククォート付きのままコピーします（GitHub は表示のときに外してしまうため）。
+- 番号（`#123`）や URL は含めません。
+
 ## 設定
 
 `chrome://extensions` の「拡張機能のオプション」から、
@@ -96,6 +107,7 @@ PR のレビューコメント欄・Issue・コミットコメントなど、Git
 - 変換の有効 / 無効
 - Preview の常時表示の有効 / 無効
 - PR 一覧の絞り込みボタンの表示 / 非表示
+- PR タイトルのコピーボタンの表示 / 非表示
 - バッジの左ラベル（既定は `review`）
 - ラベルと色の組み合わせ（`ラベル,色` を1行ずつ）
 
@@ -121,11 +133,14 @@ content.js              github.com 上で動く変換ロジックと Preview の
 content.css             Preview と候補のスタイル（拡張機能の CSS はページの CSP を受けない）
 pr-filters.js           PR 一覧の絞り込みボタン
 pr-filters.css          絞り込みボタンのスタイル（GitHub の CSS 変数でライト / ダークに合わせる）
+copy-title.js           PR タイトルのコピーボタンとツールチップ
+copy-title.css          コピーボタンとツールチップのスタイル
 options.html            設定画面
 options.js              設定の保存・復元とバッジのプレビュー
 test/local-test.html    拡張機能を入れずに content.js の挙動を試すためのページ
 test/pr-filters.html    pr-filters.js の挙動を自動で確かめるページ
-test/serve.mjs          test/pr-filters.html を GitHub と同じ形の URL で開くためのサーバ
+test/copy-title.html    copy-title.js の挙動を自動で確かめるページ
+test/serve.mjs          上の2つを GitHub と同じ形の URL で開くためのサーバ
 docs/preview.png        README のスクリーンショット
 ```
 
@@ -135,11 +150,13 @@ docs/preview.png        README のスクリーンショット
 （変換・候補プレビュー・キー操作・隣の Preview）を確認できます。横並びになる広い欄と、
 下に積まれる狭い欄の両方を置いてあります。
 
-PR 一覧の絞り込みボタンは URL のパスで動くページを判定するので、`file://` ではなくサーバ経由で開きます。
+PR 一覧の絞り込みボタンと PR タイトルのコピーボタンは URL のパスで動くページを判定するので、
+`file://` ではなくサーバ経由で開きます。
 
 ```sh
 node test/serve.mjs
-# → http://127.0.0.1:8123/octo/repo/pulls を Chrome で開く
+# → http://127.0.0.1:8123/octo/repo/pulls    PR 一覧の絞り込みボタン
+# → http://127.0.0.1:8123/octo/repo/pull/1   PR タイトルのコピーボタン
 ```
 
 ページを開くと各項目を自動で確かめ、PASS / FAIL の一覧を出します。

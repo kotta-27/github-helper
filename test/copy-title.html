@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ja" data-color-mode="light">
+  <head>
+    <meta charset="utf-8" />
+    <title>GitHub Helper — PR タイトルのコピーボタン</title>
+    <link rel="stylesheet" href="/copy-title.css" />
+    <style>
+      /* GitHub の PR 詳細画面の見出しまわりを、拡張が触る範囲だけ再現する */
+      body {
+        max-width: 1000px;
+        margin: 40px auto;
+        padding: 0 16px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", sans-serif;
+        color: #1f2328;
+        background: #ffffff;
+      }
+      .title-area { display: flex; align-items: flex-start; gap: 8px; font-size: 20px; line-height: 32.5px; }
+      h1 { display: inline; margin: 0; font-size: 20px; line-height: 25px; }
+      .f1 { font-size: 32px; font-weight: 400; }
+      .f1-light { font-size: 32px; font-weight: 300; line-height: 40px; }
+      .title-suffix { display: inline-flex; align-items: center; }
+      .pl-2 { padding-left: 8px; }
+      .fgColor-muted { color: #59636e; }
+      .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+      code { padding: 0.15em 0.35em; font-size: 85%; background: rgba(129, 139, 152, 0.2); border-radius: 6px; }
+      .sticky { margin-top: 24px; font-size: 14px; }
+      #results { margin-top: 32px; font: 13px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .pass { color: #1a7f37; }
+      .fail { color: #d1242f; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <div class="title-area">
+      <div id="title-wrap">
+        <h1 data-component="PH_Title"><span class="f1 markdown-title">Fix <code>foo</code> handling in bar</span><span class="sr-only"> - #1</span></h1><span class="title-suffix"><span aria-hidden="true" class="pl-2 fgColor-muted f1-light">#1</span></span>
+      </div>
+    </div>
+    <!-- スクロールすると出る小さい見出し。こちらには付けない -->
+    <h2 class="sticky" data-component="PH_Title"><span class="markdown-title">Fix <code>foo</code> handling in bar</span></h2>
+
+    <p>
+      <code>node test/serve.mjs</code> で立てたサーバ経由で開くと、拡張機能を入れずに
+      <code>copy-title.js</code> の挙動を確かめられます。下に各項目の結果が出ます。
+    </p>
+    <ol id="results"></ol>
+
+    <script>
+      // 拡張機能の API をスタブする。設定の読み込みは少し遅らせて、読み込み前に出ないことを確かめる
+      let onChanged = null;
+      window.chrome = {
+        runtime: {},
+        storage: {
+          sync: { get: (defaults, cb) => setTimeout(() => cb({ ...defaults }), 150) },
+          onChanged: { addListener: (fn) => (onChanged = fn) },
+        },
+      };
+
+      // クリップボードもスタブして、書き込まれた文字列を記録する
+      const copied = [];
+      let clipboardFails = false;
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: {
+          writeText: async (text) => {
+            if (clipboardFails) throw new DOMException('denied', 'NotAllowedError');
+            copied.push(text);
+          },
+        },
+      });
+      // 代わりの方法（選択してコピー）で選ばれていた文字列を記録する
+      const execCopied = [];
+      let execResult = true;
+      document.execCommand = (command) => {
+        if (command === 'copy' && execResult) {
+          const el = document.activeElement;
+          execCopied.push(el.value.slice(el.selectionStart, el.selectionEnd));
+        }
+        return command === 'copy' && execResult;
+      };
+    </script>
+    <script src="/copy-title.js"></script>
+    <script>
+      (async () => {
+        const results = document.getElementById('results');
+        const report = (name, ok, detail = '') => {
+          const li = document.createElement('li');
+          li.className = ok ? 'pass' : 'fail';
+          li.textContent = `${ok ? 'PASS' : 'FAIL'} ${name}${detail ? ` — ${detail}` : ''}`;
+          results.appendChild(li);
+        };
+
+        const frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r))));
+        const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+        const poke = async () => {
+          const dummy = document.createElement('i');
+          document.body.appendChild(dummy);
+          dummy.remove();
+          await frames();
+        };
+        const go = async (path) => {
+          history.pushState(null, '', path);
+          await poke();
+        };
+        const button = () => document.querySelector('.ghh-copy-title');
+        const wrap = () => document.querySelector('h1[data-component="PH_Title"]').parentElement;
+        const suffix = () => document.querySelector('h1[data-component="PH_Title"]').nextElementSibling; // 番号を包む inline-flex
+        const iconPaths = () => button().querySelectorAll('svg path').length; // copy は 2 本、check は 1 本
+        const label = () => button().getAttribute('aria-label');
+        const tip = () => document.querySelector('.ghh-tooltip');
+        const tipShown = () => !!tip() && tip().matches(':popover-open');
+        const tipText = () => (tipShown() ? tip().textContent : null);
+        const hover = (on) => button().dispatchEvent(new MouseEvent(on ? 'mouseenter' : 'mouseleave'));
+        const press = async () => {
+          button().click();
+          await sleep(50);
+        };
+        const FEEDBACK_WAIT = 2300; // 表示を戻すまでの 2 秒 + 余裕
+
+        const PATH = location.pathname;
+
+        // 1. 設定を読むまでは出さない
+        await frames();
+        report('設定を読む前はボタンを出さない', !button());
+        await sleep(250);
+        await poke();
+
+        // 2. 大きい見出しの番号の後ろに1つだけ
+        report('ボタンが1つだけある', document.querySelectorAll('.ghh-copy-title').length === 1);
+        report('番号を包む要素の中の、番号の後ろにある', button() && suffix().lastElementChild === button() && /#1/.test(button().previousElementSibling.textContent));
+        report('新しい画面では文の流れ用の位置合わせを使わない', !button().classList.contains('ghh-copy-title-inline'));
+        report('スクロール時の小さい見出しには付けない', !document.querySelector('h2 .ghh-copy-title, h2 + .ghh-copy-title'));
+        report('ボタンは type=button で、読み上げ用の名前がある', button().type === 'button' && label() === 'Copy title to clipboard', label());
+        report('ブラウザ標準のツールチップ（title）は付けない', !button().hasAttribute('title'));
+        report('最初はコピーのアイコン', iconPaths() === 2);
+
+        // 3. ツールチップ: マウスを乗せると下に出て、離すと消える
+        report('マウスを乗せる前はツールチップを出さない', !tipShown());
+        hover(true);
+        await frames();
+        report('マウスを乗せるとツールチップが出る', tipText() === 'Copy title to clipboard', tipText());
+        const b = button().getBoundingClientRect();
+        const t = tip().getBoundingClientRect();
+        report('ツールチップはボタンの 4px 下', Math.abs(t.top - (b.bottom + 4)) < 1, `button.bottom=${b.bottom} tip.top=${t.top}`);
+        report('ツールチップはボタンの中央に揃う', Math.abs((t.left + t.width / 2) - (b.left + b.width / 2)) < 1);
+        report('ツールチップは読み上げの対象外（名前はボタンが持つ）', tip().getAttribute('aria-hidden') === 'true');
+        hover(false);
+        await frames();
+        report('マウスを離すとツールチップが消える', !tipShown());
+
+        // 4. 押すとタイトルがコピーされ、ツールチップが「Copied!」になる
+        hover(true);
+        await press();
+        report('タイトルがコピーされる（`foo` も元どおり）', copied.at(-1) === 'Fix `foo` handling in bar', JSON.stringify(copied.at(-1)));
+        report('番号（#1）は含めない', !copied.at(-1).includes('#1'));
+        report('コピーしたらチェックのアイコンになる', iconPaths() === 1 && button().classList.contains('ghh-copy-title-done'));
+        report('ツールチップが「Copied!」になる', tipText() === 'Copied!' && label() === 'Copied!', `${tipText()} / ${label()}`);
+        const t2 = tip().getBoundingClientRect();
+        report('「Copied!」もボタンの中央に揃え直す', Math.abs((t2.left + t2.width / 2) - (b.left + b.width / 2)) < 1);
+        report('ツールチップは1つだけ', document.querySelectorAll('.ghh-tooltip').length === 1);
+        await sleep(FEEDBACK_WAIT);
+        report('乗せたままなら、元の文言に戻る', tipText() === 'Copy title to clipboard' && iconPaths() === 2, tipText());
+        hover(false);
+        await frames();
+
+        // 5. 押した後にマウスを離しても「Copied!」は戻るまで見せ、戻ったら消える
+        hover(true);
+        await press();
+        hover(false);
+        await frames();
+        report('押した直後はマウスを離しても「Copied!」を見せる', tipText() === 'Copied!', tipText());
+        await sleep(FEEDBACK_WAIT);
+        report('戻るときにマウスが離れていればツールチップを消す', !tipShown() && label() === 'Copy title to clipboard');
+
+        // 6. Esc でツールチップを閉じる
+        hover(true);
+        await frames();
+        button().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        report('Esc でツールチップを閉じる', !tipShown());
+        hover(false);
+
+        // 7. クリップボード API が使えないときは、選択してコピーする方法に切り替える
+        clipboardFails = true;
+        await press();
+        report('API が使えないときも代わりの方法でコピーできる', execCopied.at(-1) === 'Fix `foo` handling in bar', JSON.stringify(execCopied.at(-1)));
+        report('代わりの方法で使った入力欄は残さない', !document.querySelector('body > textarea'));
+        report('フォーカスはボタンに戻る', document.activeElement === button());
+        report('このときもチェックのアイコンになる', button().classList.contains('ghh-copy-title-done'));
+
+        // 8. どちらの方法でもコピーできなかったら、失敗と分かる表示にする
+        execResult = false;
+        await press();
+        report('コピーできなかったら失敗の表示',
+          button().classList.contains('ghh-copy-title-failed') && tipText() === 'Copy failed' && label() === 'Copy failed', tipText());
+        clipboardFails = false;
+        execResult = true;
+        await sleep(FEEDBACK_WAIT);
+
+        // 9. ページを開いた後にタイトルが編集されたら、新しいタイトルをコピーする
+        document.querySelector('h1 .markdown-title').textContent = 'Rename bar to baz';
+        await press();
+        report('編集後のタイトルをコピーする', copied.at(-1) === 'Rename bar to baz', JSON.stringify(copied.at(-1)));
+
+        // 10. 「Copied!」が出ている間に GitHub が見出しを描き直しても、付け直してツールチップは残さない
+        const fresh = wrap().cloneNode(true);
+        fresh.querySelector('.ghh-copy-title')?.remove();
+        wrap().replaceWith(fresh);
+        await frames();
+        report('見出しを描き直しても付け直す', suffix().lastElementChild === button());
+        report('描き直した後もボタンは1つだけ', document.querySelectorAll('.ghh-copy-title').length === 1);
+        report('消えたボタンのツールチップは残さない', !tipShown());
+
+        // 11. 従来の画面（Files changed など）の見出しにも付ける
+        document.querySelector('.title-area').outerHTML =
+          '<div class="title-area"><h1 class="gh-header-title f1"><bdi class="js-issue-title markdown-title">Classic <code>title</code></bdi>\n  <span class="f1-light fgColor-muted">#1</span>\n</h1></div>';
+        await frames();
+        const classic = document.querySelector('h1.gh-header-title');
+        report('従来の画面では見出しの中の番号の後ろにある', button() && button().parentElement === classic && /#1/.test(button().previousElementSibling.textContent));
+        report('従来の画面では文の流れ用の位置合わせを使う', button().classList.contains('ghh-copy-title-inline'));
+        await press();
+        report('従来の画面でもタイトルをコピーする', copied.at(-1) === 'Classic `title`', JSON.stringify(copied.at(-1)));
+        await sleep(FEEDBACK_WAIT);
+
+        // 12. PR の詳細画面のタブでは出し、それ以外では出さない
+        await go(`${PATH}/files`);
+        report('Files changed などのタブでも出る', !!button());
+        await go(PATH.replace(/pull\/\d+$/, 'issues/1'));
+        report('Issue の画面では出さない', !button());
+        await go(PATH.replace(/pull\/\d+$/, 'pulls'));
+        report('PR 一覧では出さない', !button());
+        await go(PATH);
+        report('PR の詳細画面に戻ると出る', !!button());
+
+        // 13. オプションで切り替えられる
+        hover(true);
+        await frames();
+        onChanged({ copyTitle: { newValue: false } }, 'sync');
+        await frames();
+        report('オプションでオフにすると消える（ツールチップも）', !button() && !tipShown());
+        onChanged({ copyTitle: { newValue: true } }, 'sync');
+        await frames();
+        report('オプションでオンに戻すと出る', !!button());
+
+        const failed = results.querySelectorAll('.fail').length;
+        document.title = failed ? 'HAS_FAIL' : 'ALL_PASS';
+      })().catch((error) => {
+        document.getElementById('results').textContent = `ERROR ${error.stack}`;
+        document.title = 'HAS_FAIL';
+      });
+    </script>
+  </body>
+</html>

@@ -1,7 +1,9 @@
-// 動作確認用の小さなサーバ。PR 一覧のテストページを GitHub と同じ形の URL
-// （/owner/repo/pulls）で開くために使う（file:// ではパスを書き換えられないため）。
+// 動作確認用の小さなサーバ。テストページを GitHub と同じ形の URL で開くために使う
+// （拡張機能は URL のパスで動くページを決めるが、file:// ではパスを書き換えられないため）。
 //
-//   node test/serve.mjs   →   http://127.0.0.1:8123/octo/repo/pulls
+//   node test/serve.mjs
+//   → http://127.0.0.1:8123/octo/repo/pulls    PR 一覧の絞り込みボタン
+//   → http://127.0.0.1:8123/octo/repo/pull/1   PR タイトルのコピーボタン
 
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -10,6 +12,11 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const port = Number(process.env.PORT) || 8123;
+// GitHub の URL の形 → それを再現したテストページ
+const ROUTES = [
+  [/^\/[^/]+\/[^/]+\/pulls\/?$/, '/test/pr-filters.html'],
+  [/^\/[^/]+\/[^/]+\/pull\/\d+(?:\/.*)?$/, '/test/copy-title.html'],
+];
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -19,7 +26,8 @@ const TYPES = {
 
 createServer(async (req, res) => {
   let path = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
-  if (/^\/[^/]+\/[^/]+\/pulls\/?$/.test(path)) path = '/test/pr-filters.html';
+  const route = ROUTES.find(([pattern]) => pattern.test(path));
+  if (route) path = route[1];
 
   const file = normalize(join(root, path));
   if (!file.startsWith(root)) {
@@ -33,5 +41,6 @@ createServer(async (req, res) => {
     res.writeHead(404).end('not found');
   }
 }).listen(port, '127.0.0.1', () => {
-  console.log(`http://127.0.0.1:${port}/octo/repo/pulls`);
+  console.log(`http://127.0.0.1:${port}/octo/repo/pulls    PR 一覧の絞り込みボタン`);
+  console.log(`http://127.0.0.1:${port}/octo/repo/pull/1   PR タイトルのコピーボタン`);
 });

@@ -4,6 +4,7 @@ const DEFAULTS = {
   enabled: true,
   preview: true,
   prFilters: true,
+  copyTitle: true,
   prefix: 'review',
   badges: {
     must: { label: 'must', color: 'red' },
@@ -69,6 +70,7 @@ function restore() {
     $('enabled').checked = stored.enabled !== false;
     $('sidePreview').checked = stored.preview !== false;
     $('prFilters').checked = stored.prFilters !== false;
+    $('copyTitle').checked = stored.copyTitle !== false;
     $('prefix').value = stored.prefix || DEFAULTS.prefix;
     const badges = Object.keys(stored.badges || {}).length ? stored.badges : DEFAULTS.badges;
     $('badges').value = stringifyBadges(badges);
@@ -83,6 +85,7 @@ function save() {
       enabled: $('enabled').checked,
       preview: $('sidePreview').checked,
       prFilters: $('prFilters').checked,
+      copyTitle: $('copyTitle').checked,
       prefix: $('prefix').value.trim() || DEFAULTS.prefix,
       badges: Object.keys(badges).length ? badges : DEFAULTS.badges,
     },
