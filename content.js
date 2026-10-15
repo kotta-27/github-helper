@@ -181,14 +181,14 @@
   // （GitHub の CSP で img.shields.io を直接読めないため画像は使わない）
   function renderBadge(badge, prefix) {
     const wrap = document.createElement('span');
-    wrap.className = 'grb-badge';
+    wrap.className = 'ghh-badge';
 
     const left = document.createElement('span');
-    left.className = 'grb-badge-left';
+    left.className = 'ghh-badge-left';
     left.textContent = prefix != null ? prefix : config.prefix;
 
     const right = document.createElement('span');
-    right.className = 'grb-badge-right';
+    right.className = 'ghh-badge-right';
     right.textContent = badge.label;
     // CSSOM 経由の指定はページの CSP の影響を受けない
     right.style.backgroundColor = cssColor(badge.color);
@@ -200,7 +200,7 @@
   // プレビュー内のバッジ1個
   function createChip(badge, markdown, prefix) {
     const chip = document.createElement('span');
-    chip.className = 'grb-chip';
+    chip.className = 'ghh-chip';
     chip.title = markdown;
     chip.appendChild(renderBadge(badge, prefix));
     return chip;
@@ -260,7 +260,7 @@
         if (badge) return createChip({ label: badge.label, color: badge.color }, token, badge.prefix);
         // バッジ以外の画像は GitHub の CSP で読み込めないので、代わりに名前を出す
         const span = document.createElement('span');
-        span.className = 'grb-md-image';
+        span.className = 'ghh-md-image';
         span.textContent = `🖼 ${label || url}`;
         span.title = url;
         return span;
@@ -355,7 +355,7 @@
         box.type = 'checkbox';
         box.disabled = true;
         box.checked = /[xX]/.test(task[1]);
-        item.classList.add('grb-md-task');
+        item.classList.add('ghh-md-task');
         item.appendChild(box);
         content = task[2];
       }
@@ -456,10 +456,10 @@
     if (panes.has(textarea)) return panes.get(textarea);
 
     const pane = document.createElement('div');
-    pane.className = 'grb-preview';
+    pane.className = 'ghh-preview';
 
     const head = document.createElement('div');
-    head.className = 'grb-preview-head';
+    head.className = 'ghh-preview-head';
 
     const title = document.createElement('span');
     title.textContent = 'Preview';
@@ -467,12 +467,12 @@
     // 入力欄の上に重ねると本文を隠すので、プレビューの見出しに置く
     const toggle = document.createElement('button');
     toggle.type = 'button';
-    toggle.className = 'grb-preview-toggle';
+    toggle.className = 'ghh-preview-toggle';
 
     head.append(title, toggle);
 
     const body = document.createElement('div');
-    body.className = 'grb-preview-body';
+    body.className = 'ghh-preview-body';
 
     pane.append(head, body);
     textarea.insertAdjacentElement('afterend', pane);
@@ -500,7 +500,7 @@
     if (collapsed) collapsedFields.add(state.textarea);
     else collapsedFields.delete(state.textarea);
 
-    state.pane.classList.toggle('grb-collapsed', collapsed);
+    state.pane.classList.toggle('ghh-collapsed', collapsed);
     state.toggle.textContent = collapsed ? '出す' : '隠す';
     state.toggle.setAttribute('aria-expanded', String(!collapsed));
     update(state);
@@ -514,9 +514,9 @@
     if (state.frame) cancelAnimationFrame(state.frame);
     if (state.check) cancelAnimationFrame(state.check);
     const parent = state.textarea.parentElement;
-    if (parent) parent.classList.remove('grb-wrap-parent');
+    if (parent) parent.classList.remove('ghh-wrap-parent');
     state.pane.remove();
-    state.textarea.classList.remove('grb-split');
+    state.textarea.classList.remove('ghh-split');
   }
 
   function update(state) {
@@ -527,10 +527,10 @@
 
     state.body.textContent = '';
     if (value.trim()) {
-      state.body.classList.remove('grb-preview-empty');
+      state.body.classList.remove('ghh-preview-empty');
       state.body.appendChild(renderMarkdown(value));
     } else {
-      state.body.classList.add('grb-preview-empty');
+      state.body.classList.add('ghh-preview-empty');
       state.body.textContent = 'Nothing to preview';
     }
   }
@@ -547,7 +547,7 @@
 
   // 入力欄のスクロール位置に合わせてプレビューも動かす（書いている辺りが見えるように）
   function syncScroll(state) {
-    if (!state.pane.classList.contains('grb-side')) return;
+    if (!state.pane.classList.contains('ghh-side')) return;
     const source = state.textarea;
     const sourceMax = source.scrollHeight - source.clientHeight;
     const targetMax = state.body.scrollHeight - state.body.clientHeight;
@@ -557,7 +557,7 @@
 
   // 横並びのときだけ、入力欄の高さにプレビューを合わせる
   function matchHeight(state) {
-    if (!state.pane.classList.contains('grb-side')) {
+    if (!state.pane.classList.contains('ghh-side')) {
       state.pane.style.height = '';
       return;
     }
@@ -566,15 +566,15 @@
   }
 
   function applySide(state, side) {
-    state.textarea.classList.toggle('grb-split', side);
-    state.pane.classList.toggle('grb-side', side);
-    state.pane.classList.toggle('grb-stack', !side);
+    state.textarea.classList.toggle('ghh-split', side);
+    state.pane.classList.toggle('ghh-side', side);
+    state.pane.classList.toggle('ghh-stack', !side);
 
     const parent = state.textarea.parentElement;
     if (parent) {
       // 親が横並びの flex だと、そのままでは下に回り込めない
       const flexParent = window.getComputedStyle(parent).display.includes('flex');
-      parent.classList.toggle('grb-wrap-parent', !side && flexParent);
+      parent.classList.toggle('ghh-wrap-parent', !side && flexParent);
     }
     matchHeight(state);
   }
@@ -597,7 +597,7 @@
   }
 
   function verifyLayout(state) {
-    if (!state.pane.classList.contains('grb-side')) return;
+    if (!state.pane.classList.contains('ghh-side')) return;
 
     const source = state.textarea.getBoundingClientRect();
     const pane = state.pane.getBoundingClientRect();
@@ -788,16 +788,16 @@
     if (popup.root) return popup.root;
 
     const root = document.createElement('div');
-    root.className = 'grb-popup';
+    root.className = 'ghh-popup';
     root.setAttribute('role', 'listbox');
     root.hidden = true;
 
     const list = document.createElement('div');
-    list.className = 'grb-list';
+    list.className = 'ghh-list';
     root.appendChild(list);
 
     const hint = document.createElement('div');
-    hint.className = 'grb-hint';
+    hint.className = 'ghh-hint';
     hint.textContent = 'Tab / Enter で挿入・↑↓ で選択・Esc で閉じる';
     root.appendChild(hint);
 
@@ -820,7 +820,7 @@
     if (!children.length) return;
     popup.index = (index + children.length) % children.length;
     for (let i = 0; i < children.length; i += 1) {
-      children[i].classList.toggle('grb-item-active', i === popup.index);
+      children[i].classList.toggle('ghh-item-active', i === popup.index);
     }
     children[popup.index].scrollIntoView({ block: 'nearest' });
   }
@@ -834,12 +834,12 @@
 
     matches.forEach((badge, i) => {
       const item = document.createElement('div');
-      item.className = 'grb-item';
+      item.className = 'ghh-item';
       item.setAttribute('role', 'option');
       item.appendChild(renderBadge(badge));
 
       const token = document.createElement('span');
-      token.className = 'grb-token';
+      token.className = 'ghh-token';
       token.textContent = `/${badge.label}`;
       item.appendChild(token);
 
@@ -977,7 +977,7 @@
     (event) => {
       const target = event.target;
       // プレビューの更新で出るスクロールで候補を閉じない
-      if (target && target.nodeType === 1 && target.closest && target.closest('.grb-preview')) return;
+      if (target && target.nodeType === 1 && target.closest && target.closest('.ghh-preview')) return;
 
       // 入力欄そのもののスクロールなら、閉じずに位置を合わせ直す
       if (popup.target && target === popup.target) {

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "GitHub Review Badge",
+  "name": "GitHub Helper",
   "version": "2.0.1",
   "description": "GitHub のコメント欄の隣にプレビューを常時表示し、/imo などの入力でレビューバッジを挿入できるようにします。",
   "permissions": [

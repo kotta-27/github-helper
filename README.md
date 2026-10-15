@@ -1,7 +1,9 @@
-# GitHub Review Badge
+# GitHub Helper
 
-GitHub のコメント欄に Preview を並べて表示し、`/imo` と入力してスペースを押すと shields.io の
-レビューバッジ Markdown に変換する Chrome 拡張です。
+GitHub を便利にする Chrome 拡張です。いまは次の2つができます。
+
+- コメント欄の隣に Preview を常時表示する
+- `/imo` と入力してスペースを押すと、shields.io のレビューバッジの Markdown に変換する
 
 ```
 /imo␣  →  ![](https://img.shields.io/badge/review-imo-orange.svg)
