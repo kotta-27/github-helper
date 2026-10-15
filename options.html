@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>GitHub Review Badge の設定</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", sans-serif;
+        max-width: 640px;
+        margin: 40px auto;
+        padding: 0 16px;
+        line-height: 1.7;
+        color: #1f2328;
+      }
+      h1 { font-size: 20px; }
+      label { display: block; font-weight: 600; margin-top: 24px; }
+      input[type="text"], textarea {
+        width: 100%;
+        box-sizing: border-box;
+        font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+        padding: 8px;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+      }
+      textarea { height: 160px; resize: vertical; }
+      .hint { color: #59636e; font-size: 13px; }
+      .row { display: flex; align-items: center; gap: 8px; margin-top: 24px; }
+      .row label { margin: 0; }
+      button {
+        margin-top: 24px;
+        padding: 6px 16px;
+        font-weight: 600;
+        color: #fff;
+        background: #1f883d;
+        border: 0;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      #status { margin-left: 12px; color: #1f883d; font-size: 13px; }
+      #preview { margin-top: 12px; }
+      #preview img { vertical-align: middle; margin-right: 8px; }
+    </style>
+  </head>
+  <body>
+    <h1>GitHub Review Badge</h1>
+    <p class="hint">
+      GitHub のコメント欄で <code>/imo</code> と入力して <strong>スペース</strong>（または改行）を押すと、
+      <code>![](https://img.shields.io/badge/review-imo-orange.svg)</code> に置き換わります。
+      Preview を有効にすると、入力欄の隣に描画結果が並び、Write / Preview を切り替えずに
+      仕上がりを確認できます（Preview の見出しの右端のボタンで、その欄だけ隠せます）。
+    </p>
+
+    <div class="row">
+      <input type="checkbox" id="enabled" />
+      <label for="enabled">変換を有効にする</label>
+    </div>
+
+    <div class="row">
+      <input type="checkbox" id="sidePreview" />
+      <label for="sidePreview">コメント欄の隣に Preview を常時表示する</label>
+    </div>
+
+    <label for="prefix">バッジの左ラベル</label>
+    <input type="text" id="prefix" placeholder="review" />
+
+    <label for="badges">ラベルと色（1行に <code>ラベル,色</code>）</label>
+    <textarea id="badges" spellcheck="false"></textarea>
+    <p class="hint">色は shields.io が受け付ける名前か 16 進数（例: <code>orange</code> / <code>ff69b4</code>）。</p>
+
+    <div id="preview"></div>
+
+    <div>
+      <button id="save">保存</button>
+      <span id="status"></span>
+    </div>
+
+    <script src="options.js"></script>
+  </body>
+</html>

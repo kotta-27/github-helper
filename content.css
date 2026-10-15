@@ -1,0 +1,365 @@
+/* 拡張機能が注入する CSS はページの CSP の影響を受けないので、
+   プレビューはここで描画する（img.shields.io への直接読み込みは GitHub の CSP で塞がれる） */
+
+.grb-popup {
+  position: fixed;
+  z-index: 2147483647;
+  box-sizing: border-box;
+  max-width: 320px;
+  padding: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", sans-serif;
+  color: #1f2328;
+  background: #ffffff;
+  border: 1px solid #d1d9e0;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(31, 35, 40, 0.2);
+}
+
+.grb-popup[hidden] {
+  display: none;
+}
+
+.grb-list {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.grb-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.grb-item-active {
+  background: #ddf4ff;
+}
+
+.grb-token {
+  font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #59636e;
+}
+
+/* shields.io の flat スタイルを模した見た目 */
+.grb-badge {
+  display: inline-flex;
+  height: 20px;
+  overflow: hidden;
+  font: 11px/20px Verdana, DejaVu Sans, Geneva, sans-serif;
+  color: #ffffff;
+  text-shadow: 0 -1px 0 rgba(1, 1, 1, 0.3);
+  white-space: nowrap;
+  border-radius: 3px;
+}
+
+.grb-badge-left,
+.grb-badge-right {
+  padding: 0 6px;
+}
+
+.grb-badge-left {
+  background: #555555;
+}
+
+.grb-hint {
+  padding: 4px 8px 2px;
+  font-size: 10px;
+  color: #59636e;
+  border-top: 1px solid #d1d9e0;
+}
+
+html[data-color-mode="dark"] .grb-popup {
+  color: #f0f6fc;
+  background: #151b23;
+  border-color: #3d444d;
+  box-shadow: 0 8px 24px rgba(1, 4, 9, 0.8);
+}
+
+html[data-color-mode="dark"] .grb-item-active {
+  background: #263751;
+}
+
+html[data-color-mode="dark"] .grb-token,
+html[data-color-mode="dark"] .grb-hint {
+  color: #9198a1;
+}
+
+html[data-color-mode="dark"] .grb-hint {
+  border-top-color: #3d444d;
+}
+
+/* auto は OS の設定に従う */
+@media (prefers-color-scheme: dark) {
+  html[data-color-mode="auto"] .grb-popup {
+    color: #f0f6fc;
+    background: #151b23;
+    border-color: #3d444d;
+    box-shadow: 0 8px 24px rgba(1, 4, 9, 0.8);
+  }
+
+  html[data-color-mode="auto"] .grb-item-active {
+    background: #263751;
+  }
+
+  html[data-color-mode="auto"] .grb-token,
+  html[data-color-mode="auto"] .grb-hint {
+    color: #9198a1;
+    border-top-color: #3d444d;
+  }
+}
+
+/* ==========================================================================
+   Write の隣に並べるプレビュー
+   ========================================================================== */
+
+/* 横に並べられるときだけ、入力欄を半分にする（元の textarea には手を入れない） */
+textarea.grb-split {
+  width: calc(50% - 6px) !important;
+  max-width: calc(50% - 6px) !important;
+  /* 親が flex のときは width より flex が効くので、両方指定しておく */
+  flex: 0 1 calc(50% - 6px) !important;
+  display: inline-block !important;
+  vertical-align: top;
+}
+
+.grb-preview {
+  box-sizing: border-box;
+  margin-top: 8px;
+  overflow: hidden;
+  color: #1f2328;
+  background: #ffffff;
+  border: 1px solid #d1d9e0;
+  border-radius: 6px;
+}
+
+/* 下に積むとき。親が flex でも全幅で回り込めるようにする */
+.grb-preview.grb-stack {
+  width: 100%;
+  flex: 1 0 100%;
+}
+
+.grb-wrap-parent {
+  flex-wrap: wrap !important;
+}
+
+.grb-preview.grb-side {
+  display: inline-block;
+  width: calc(50% - 6px);
+  max-width: calc(50% - 6px);
+  flex: 0 1 calc(50% - 6px);
+  margin-top: 0;
+  margin-left: 10px;
+  vertical-align: top;
+}
+
+.grb-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  font: 11px/1.8 -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", sans-serif;
+  color: #59636e;
+  background: #f6f8fa;
+  border-bottom: 1px solid #d1d9e0;
+}
+
+/* 見出しの右端の「隠す / 出す」。行の高さを変えないよう余白は左右だけ */
+.grb-preview-toggle {
+  margin: 0 -6px 0 0;
+  padding: 0 6px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: 4px;
+}
+
+.grb-preview-toggle:hover {
+  color: #1f2328;
+  background: rgba(129, 139, 152, 0.15);
+}
+
+/* 隠しているときは見出しの帯だけ残す */
+.grb-preview.grb-collapsed .grb-preview-head {
+  border-bottom: 0;
+}
+
+.grb-preview.grb-collapsed .grb-preview-body {
+  display: none;
+}
+
+.grb-preview-body {
+  height: calc(100% - 28px);
+  max-height: 60vh;
+  padding: 10px 12px;
+  overflow-y: auto;
+  font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", sans-serif;
+  word-break: break-word;
+}
+
+.grb-preview:not(.grb-side) .grb-preview-body {
+  height: auto;
+  max-height: 320px;
+}
+
+.grb-preview-body.grb-preview-empty {
+  color: #59636e;
+  font-style: italic;
+}
+
+/* --- プレビュー内の Markdown ------------------------------------------------ */
+.grb-preview-body > :first-child { margin-top: 0; }
+.grb-preview-body > :last-child { margin-bottom: 0; }
+
+.grb-preview-body p,
+.grb-preview-body ul,
+.grb-preview-body ol,
+.grb-preview-body pre,
+.grb-preview-body blockquote {
+  margin: 0 0 12px;
+}
+
+.grb-preview-body h1,
+.grb-preview-body h2,
+.grb-preview-body h3,
+.grb-preview-body h4,
+.grb-preview-body h5,
+.grb-preview-body h6 {
+  margin: 16px 0 8px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.grb-preview-body h1 { font-size: 1.5em; padding-bottom: .3em; border-bottom: 1px solid #d1d9e0; }
+.grb-preview-body h2 { font-size: 1.3em; padding-bottom: .3em; border-bottom: 1px solid #d1d9e0; }
+.grb-preview-body h3 { font-size: 1.15em; }
+
+.grb-preview-body ul,
+.grb-preview-body ol { padding-left: 1.6em; }
+.grb-preview-body li { margin: 2px 0; }
+.grb-preview-body li > ul,
+.grb-preview-body li > ol { margin: 2px 0; }
+
+.grb-preview-body li.grb-md-task { list-style: none; margin-left: -1.2em; }
+.grb-preview-body li.grb-md-task input { margin-right: 6px; vertical-align: middle; }
+
+.grb-preview-body blockquote {
+  padding: 0 1em;
+  color: #59636e;
+  border-left: 3px solid #d1d9e0;
+}
+
+.grb-preview-body pre {
+  padding: 10px 12px;
+  overflow-x: auto;
+  background: #f6f8fa;
+  border-radius: 6px;
+}
+
+.grb-preview-body pre code {
+  padding: 0;
+  font-size: 12px;
+  background: none;
+}
+
+.grb-preview-body code {
+  padding: 0.15em 0.35em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background: rgba(129, 139, 152, 0.2);
+  border-radius: 4px;
+}
+
+.grb-preview-body a { color: #0969da; text-decoration: none; }
+.grb-preview-body a:hover { text-decoration: underline; }
+.grb-preview-body hr { height: 1px; margin: 16px 0; background: #d1d9e0; border: 0; }
+.grb-preview-body del { opacity: 0.7; }
+
+.grb-md-image {
+  padding: 0 4px;
+  color: #59636e;
+  background: rgba(129, 139, 152, 0.15);
+  border-radius: 4px;
+}
+
+/* プレビュー内のバッジ */
+.grb-chip {
+  display: inline-flex;
+  vertical-align: text-bottom;
+  margin: 0 1px;
+}
+
+/* ==========================================================================
+   ダークテーマ
+   ========================================================================== */
+html[data-color-mode="dark"] .grb-preview {
+  color: #f0f6fc;
+  background: #0d1117;
+  border-color: #3d444d;
+}
+html[data-color-mode="dark"] .grb-preview-head {
+  color: #9198a1;
+  background: #151b23;
+  border-bottom-color: #3d444d;
+}
+html[data-color-mode="dark"] .grb-preview-body h1,
+html[data-color-mode="dark"] .grb-preview-body h2,
+html[data-color-mode="dark"] .grb-preview-body hr {
+  border-color: #3d444d;
+}
+html[data-color-mode="dark"] .grb-preview-body pre {
+  background: #151b23;
+}
+html[data-color-mode="dark"] .grb-preview-body blockquote,
+html[data-color-mode="dark"] .grb-preview-body .grb-preview-empty {
+  color: #9198a1;
+  border-color: #3d444d;
+}
+html[data-color-mode="dark"] .grb-preview-body a {
+  color: #4493f8;
+}
+html[data-color-mode="dark"] .grb-preview-toggle:hover {
+  color: #f0f6fc;
+}
+
+/* auto は OS の設定に従う */
+@media (prefers-color-scheme: dark) {
+  html[data-color-mode="auto"] .grb-preview {
+    color: #f0f6fc;
+    background: #0d1117;
+    border-color: #3d444d;
+  }
+
+  html[data-color-mode="auto"] .grb-preview-head {
+    color: #9198a1;
+    background: #151b23;
+    border-bottom-color: #3d444d;
+  }
+
+  html[data-color-mode="auto"] .grb-preview-body h1,
+  html[data-color-mode="auto"] .grb-preview-body h2,
+  html[data-color-mode="auto"] .grb-preview-body hr {
+    border-color: #3d444d;
+  }
+
+  html[data-color-mode="auto"] .grb-preview-body pre {
+    background: #151b23;
+  }
+
+  html[data-color-mode="auto"] .grb-preview-body blockquote,
+  html[data-color-mode="auto"] .grb-preview-body .grb-preview-empty {
+    color: #9198a1;
+    border-color: #3d444d;
+  }
+
+  html[data-color-mode="auto"] .grb-preview-body a {
+    color: #4493f8;
+  }
+
+  html[data-color-mode="auto"] .grb-preview-toggle:hover {
+    color: #f0f6fc;
+  }
+}

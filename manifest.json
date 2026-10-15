@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "GitHub Review Badge",
+  "version": "2.0.1",
+  "description": "GitHub のコメント欄の隣にプレビューを常時表示し、/imo などの入力でレビューバッジを挿入できるようにします。",
+  "permissions": [
+    "storage"
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://github.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true,
+      "css": [
+        "content.css"
+      ]
+    }
+  ]
+}
