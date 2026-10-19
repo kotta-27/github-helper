@@ -150,8 +150,8 @@
         // 4. 押すとタイトルがコピーされ、ツールチップが「Copied!」になる
         hover(true);
         await press();
-        report('タイトルがコピーされる（`foo` も元どおり）', copied.at(-1) === 'Fix `foo` handling in bar', JSON.stringify(copied.at(-1)));
-        report('番号（#1）は含めない', !copied.at(-1).includes('#1'));
+        report('タイトルと PR 番号がコピーされる（`foo` も元どおり）', copied.at(-1) === 'Fix `foo` handling in bar #1', JSON.stringify(copied.at(-1)));
+        report('PR 番号はタイトルの最後に半角スペースで付ける', copied.at(-1).endsWith(' #1'));
         report('コピーしたらチェックのアイコンになる', iconPaths() === 1 && button().classList.contains('ghh-copy-title-done'));
         report('ツールチップが「Copied!」になる', tipText() === 'Copied!' && label() === 'Copied!', `${tipText()} / ${label()}`);
         const t2 = tip().getBoundingClientRect();
@@ -181,7 +181,7 @@
         // 7. クリップボード API が使えないときは、選択してコピーする方法に切り替える
         clipboardFails = true;
         await press();
-        report('API が使えないときも代わりの方法でコピーできる', execCopied.at(-1) === 'Fix `foo` handling in bar', JSON.stringify(execCopied.at(-1)));
+        report('API が使えないときも代わりの方法でコピーできる', execCopied.at(-1) === 'Fix `foo` handling in bar #1', JSON.stringify(execCopied.at(-1)));
         report('代わりの方法で使った入力欄は残さない', !document.querySelector('body > textarea'));
         report('フォーカスはボタンに戻る', document.activeElement === button());
         report('このときもチェックのアイコンになる', button().classList.contains('ghh-copy-title-done'));
@@ -198,7 +198,7 @@
         // 9. ページを開いた後にタイトルが編集されたら、新しいタイトルをコピーする
         document.querySelector('h1 .markdown-title').textContent = 'Rename bar to baz';
         await press();
-        report('編集後のタイトルをコピーする', copied.at(-1) === 'Rename bar to baz', JSON.stringify(copied.at(-1)));
+        report('編集後のタイトルをコピーする', copied.at(-1) === 'Rename bar to baz #1', JSON.stringify(copied.at(-1)));
 
         // 10. 「Copied!」が出ている間に GitHub が見出しを描き直しても、付け直してツールチップは残さない
         const fresh = wrap().cloneNode(true);
@@ -217,12 +217,20 @@
         report('従来の画面では見出しの中の番号の後ろにある', button() && button().parentElement === classic && /#1/.test(button().previousElementSibling.textContent));
         report('従来の画面では文の流れ用の位置合わせを使う', button().classList.contains('ghh-copy-title-inline'));
         await press();
-        report('従来の画面でもタイトルをコピーする', copied.at(-1) === 'Classic `title`', JSON.stringify(copied.at(-1)));
+        report('従来の画面でもタイトルをコピーする', copied.at(-1) === 'Classic `title` #1', JSON.stringify(copied.at(-1)));
         await sleep(FEEDBACK_WAIT);
 
         // 12. PR の詳細画面のタブでは出し、それ以外では出さない
         await go(`${PATH}/files`);
         report('Files changed などのタブでも出る', !!button());
+        await press();
+        report('タブの URL でも PR 番号を取れる', copied.at(-1) === 'Classic `title` #1', JSON.stringify(copied.at(-1)));
+        await sleep(FEEDBACK_WAIT);
+        // 番号は画面の表示（#1）ではなく URL から取る
+        await go(PATH.replace(/pull\/\d+$/, 'pull/4321'));
+        await press();
+        report('PR 番号は URL から取る', copied.at(-1) === 'Classic `title` #4321', JSON.stringify(copied.at(-1)));
+        await sleep(FEEDBACK_WAIT);
         await go(PATH.replace(/pull\/\d+$/, 'issues/1'));
         report('Issue の画面では出さない', !button());
         await go(PATH.replace(/pull\/\d+$/, 'pulls'));

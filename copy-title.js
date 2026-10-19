@@ -2,10 +2,11 @@
   'use strict';
 
   // PR の詳細画面（/owner/repo/pull/123 と、その Commits / Files changed などのタブ）で、
-  // タイトルの番号（#123）の後ろに、タイトルをコピーするボタンを置く。
+  // タイトルの番号（#123）の後ろに、「タイトル #123」の形でコピーするボタンを置く。
   // 見た目とツールチップは、GitHub のブランチ名のコピーボタンに合わせる。
 
-  const PULL_PATH_RE = /^\/[^/]+\/[^/]+\/pull\/\d+(?:\/|$)/;
+  // PR 番号は表示ではなく URL から取る（どのタブでも同じ形で取れる）
+  const PULL_PATH_RE = /^\/[^/]+\/[^/]+\/pull\/(\d+)(?:\/|$)/;
   const BUTTON_CLASS = 'ghh-copy-title';
 
   // PR の見出しは画面によって2種類ある。どちらも、スクロールすると出る小さい見出しではなく
@@ -206,9 +207,10 @@
       event.preventDefault();
       // 押した時点のタイトルを読む（ページを開いたあとにタイトルが編集されることがある）
       const found = findTitle();
-      if (!found) return;
+      const pull = PULL_PATH_RE.exec(location.pathname);
+      if (!found || !pull) return;
 
-      const ok = await copyText(titleText(found.text));
+      const ok = await copyText(`${titleText(found.text)} #${pull[1]}`);
       // 代わりの方法でコピーしたときに外れたフォーカスを戻す
       if (!button.isConnected) return;
       button.focus({ preventScroll: true });
