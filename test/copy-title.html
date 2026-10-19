@@ -45,12 +45,14 @@
     <ol id="results"></ol>
 
     <script>
-      // 拡張機能の API をスタブする。設定の読み込みは少し遅らせて、読み込み前に出ないことを確かめる
+      // 拡張機能の API をスタブする。設定はテストが releaseSettings() を呼ぶまで返さず、
+      // 読み込み前に出ないことを時間に頼らず確かめる
+      let releaseSettings = null;
       let onChanged = null;
       window.chrome = {
         runtime: {},
         storage: {
-          sync: { get: (defaults, cb) => setTimeout(() => cb({ ...defaults }), 150) },
+          sync: { get: (defaults, cb) => (releaseSettings = () => cb({ ...defaults })) },
           onChanged: { addListener: (fn) => (onChanged = fn) },
         },
       };
@@ -121,7 +123,7 @@
         // 1. 設定を読むまでは出さない
         await frames();
         report('設定を読む前はボタンを出さない', !button());
-        await sleep(250);
+        releaseSettings();
         await poke();
 
         // 2. 大きい見出しの番号の後ろに1つだけ
